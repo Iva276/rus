@@ -65,38 +65,64 @@ export default function RussianReadAloudDemo() {
   }, []);
 
   const handleSpeak = () => {
-    if ("speechSynthesis" in window) {
-      window.speechSynthesis.cancel();
+    if (!("speechSynthesis" in window)) {
+      alert("浏览器不支持语音合成");
+      return;
+    }
 
-      setTimeout(() => {
-        const utterance = new SpeechSynthesisUtterance(sample.ru);
-        utterance.lang = "ru-RU";
-        utterance.rate = 0.85;
+    const synth = window.speechSynthesis;
+    synth.cancel();
 
-        const voices = window.speechSynthesis.getVoices();
-        const russianVoice = voices.find(v => v.lang.startsWith('ru'));
-        if (russianVoice) {
-          utterance.voice = russianVoice;
+    const speak = () => {
+      const utterance = new SpeechSynthesisUtterance(sample.ru);
+      utterance.lang = "ru-RU";
+      utterance.rate = 0.85;
+      utterance.pitch = 1;
+      utterance.volume = 1;
+
+      const voices = synth.getVoices();
+      console.log("可用语音:", voices.map(v => `${v.name} (${v.lang})`));
+
+      const russianVoice = voices.find(v =>
+        v.lang.includes('ru') || v.lang.includes('RU')
+      );
+
+      if (russianVoice) {
+        utterance.voice = russianVoice;
+        setStatus(`使用语音: ${russianVoice.name}`);
+      } else {
+        setStatus("未找到俄语语音，使用默认语音");
+      }
+
+      utterance.onstart = () => {
+        setIsSpeaking(true);
+        setStatus("正在播放...");
+      };
+
+      utterance.onend = () => {
+        setIsSpeaking(false);
+        setStatus("播放完成");
+      };
+
+      utterance.onerror = (e) => {
+        setIsSpeaking(false);
+        setStatus(`错误: ${e.error}`);
+        console.error("TTS 错误:", e);
+
+        if (e.error === "not-allowed") {
+          alert("请允许浏览器使用语音功能");
+        } else if (e.error === "network") {
+          alert("网络错误，请检查连接");
         }
+      };
 
-        utterance.onstart = () => {
-          setIsSpeaking(true);
-          setStatus("播放中...");
-        };
-        utterance.onend = () => {
-          setIsSpeaking(false);
-          setStatus("播放结束");
-        };
-        utterance.onerror = (e) => {
-          setIsSpeaking(false);
-          setStatus("播放出错: " + e.error);
-          console.error("TTS error:", e);
-        };
+      synth.speak(utterance);
+    };
 
-        window.speechSynthesis.speak(utterance);
-      }, 100);
+    if (synth.getVoices().length === 0) {
+      synth.addEventListener('voiceschanged', speak, { once: true });
     } else {
-      alert("浏览器不支持 TTS");
+      speak();
     }
   };
 
@@ -196,7 +222,17 @@ export default function RussianReadAloudDemo() {
 
       <div style={{ marginBottom: 20 }}>
         <button onClick={handleSpeak} disabled={isSpeaking} style={btnStyle}>
-          {isSpeaking ? "播放中..." : "播放俄语 (TTS)"}
+          {isSpeaking ? "播放中..." : "🔊 播放俄语"}
+        </button>
+        <button
+          onClick={() => {
+            const voices = window.speechSynthesis.getVoices();
+            const info = voices.map(v => `${v.name} (${v.lang})`).join('\n');
+            alert(`共 ${voices.length} 个语音:\n\n${info || '无可用语音'}`);
+          }}
+          style={{ ...btnStyle, background: "#95a5a6", marginLeft: 10 }}
+        >
+          检查语音
         </button>
       </div>
 
