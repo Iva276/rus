@@ -21,6 +21,16 @@ export default function RussianReadAloudDemo() {
   const recognitionRef = useRef<any>(null);
 
   useEffect(() => {
+    if ("speechSynthesis" in window) {
+      const loadVoices = () => {
+        window.speechSynthesis.getVoices();
+      };
+      loadVoices();
+      if (window.speechSynthesis.onvoiceschanged !== undefined) {
+        window.speechSynthesis.onvoiceschanged = loadVoices;
+      }
+    }
+
     const SpeechRecognition: any =
       (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (SpeechRecognition) {
@@ -56,18 +66,35 @@ export default function RussianReadAloudDemo() {
 
   const handleSpeak = () => {
     if ("speechSynthesis" in window) {
-      const utterance = new SpeechSynthesisUtterance(sample.ru);
-      utterance.lang = "ru-RU";
-      utterance.rate = 0.85;
-      utterance.onstart = () => {
-        setIsSpeaking(true);
-        setStatus("播放中...");
-      };
-      utterance.onend = () => {
-        setIsSpeaking(false);
-        setStatus("播放结束");
-      };
-      window.speechSynthesis.speak(utterance);
+      window.speechSynthesis.cancel();
+
+      setTimeout(() => {
+        const utterance = new SpeechSynthesisUtterance(sample.ru);
+        utterance.lang = "ru-RU";
+        utterance.rate = 0.85;
+
+        const voices = window.speechSynthesis.getVoices();
+        const russianVoice = voices.find(v => v.lang.startsWith('ru'));
+        if (russianVoice) {
+          utterance.voice = russianVoice;
+        }
+
+        utterance.onstart = () => {
+          setIsSpeaking(true);
+          setStatus("播放中...");
+        };
+        utterance.onend = () => {
+          setIsSpeaking(false);
+          setStatus("播放结束");
+        };
+        utterance.onerror = (e) => {
+          setIsSpeaking(false);
+          setStatus("播放出错: " + e.error);
+          console.error("TTS error:", e);
+        };
+
+        window.speechSynthesis.speak(utterance);
+      }, 100);
     } else {
       alert("浏览器不支持 TTS");
     }
