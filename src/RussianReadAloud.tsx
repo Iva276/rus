@@ -8,6 +8,7 @@ export default function RussianReadAloudDemo() {
   };
 
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
   const [isRecognizing, setIsRecognizing] = useState(false);
   const [recognizedText, setRecognizedText] = useState("");
   const [score, setScore] = useState<number | null>(null);
@@ -71,6 +72,21 @@ export default function RussianReadAloudDemo() {
     }
 
     const synth = window.speechSynthesis;
+
+    if (isPaused) {
+      synth.resume();
+      setIsPaused(false);
+      setStatus("继续播放...");
+      return;
+    }
+
+    if (isSpeaking) {
+      synth.pause();
+      setIsPaused(true);
+      setStatus("已暂停");
+      return;
+    }
+
     synth.cancel();
 
     const speak = () => {
@@ -96,16 +112,19 @@ export default function RussianReadAloudDemo() {
 
       utterance.onstart = () => {
         setIsSpeaking(true);
+        setIsPaused(false);
         setStatus("正在播放...");
       };
 
       utterance.onend = () => {
         setIsSpeaking(false);
+        setIsPaused(false);
         setStatus("播放完成");
       };
 
       utterance.onerror = (e) => {
         setIsSpeaking(false);
+        setIsPaused(false);
         setStatus(`错误: ${e.error}`);
         console.error("TTS 错误:", e);
 
@@ -123,6 +142,15 @@ export default function RussianReadAloudDemo() {
       synth.addEventListener('voiceschanged', speak, { once: true });
     } else {
       speak();
+    }
+  };
+
+  const handleStop = () => {
+    if ("speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
+      setIsSpeaking(false);
+      setIsPaused(false);
+      setStatus("已停止");
     }
   };
 
@@ -221,9 +249,17 @@ export default function RussianReadAloudDemo() {
       </div>
 
       <div style={{ marginBottom: 20 }}>
-        <button onClick={handleSpeak} disabled={isSpeaking} style={btnStyle}>
-          {isSpeaking ? "播放中..." : "🔊 播放俄语"}
+        <button onClick={handleSpeak} style={btnStyle}>
+          {isPaused ? "▶️ 继续" : isSpeaking ? "⏸️ 暂停" : "🔊 播放"}
         </button>
+        {(isSpeaking || isPaused) && (
+          <button
+            onClick={handleStop}
+            style={{ ...btnStyle, background: "#e74c3c", marginLeft: 10 }}
+          >
+            ⏹️ 停止
+          </button>
+        )}
         <button
           onClick={() => {
             const voices = window.speechSynthesis.getVoices();
