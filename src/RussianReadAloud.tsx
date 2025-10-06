@@ -1,11 +1,8 @@
 import React, { useState, useRef, useEffect } from "react";
 
 export default function RussianReadAloudDemo() {
-  const sample = {
-    title: "每日俄语 - 示例文章",
-    ru: "Привет! Меня зовут Ива. Сегодня я расскажу короткую историю о том, как учить новые слова. Повторяй за мной по предложениям и старайся произносить четко.",
-    zh: "你好！我叫 Iva。今天我要讲一个关于如何记单词的小故事。请跟着句子朗读，尽量发音清晰。",
-  };
+  const [russianText, setRussianText] = useState("Привет! Меня зовут Ива. Сегодня я расскажу короткую историю о том, как учить новые слова. Повторяй за мной по предложениям и старайся произносить четко.");
+  const [chineseText, setChineseText] = useState("");
 
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
@@ -90,7 +87,7 @@ export default function RussianReadAloudDemo() {
     synth.cancel();
 
     const speak = () => {
-      const utterance = new SpeechSynthesisUtterance(sample.ru);
+      const utterance = new SpeechSynthesisUtterance(russianText);
       utterance.lang = "ru-RU";
       utterance.rate = 0.85;
       utterance.pitch = 1;
@@ -198,7 +195,7 @@ export default function RussianReadAloudDemo() {
   };
 
   const computeScore = () => {
-    const original = sample.ru.toLowerCase().replace(/[^\u0400-\u04FF\s]/g, "");
+    const original = russianText.toLowerCase().replace(/[^\u0400-\u04FF\s]/g, "");
     const recognized = recognizedText.toLowerCase().replace(/[^\u0400-\u04FF\s]/g, "");
     const origWords = original.split(/\s+/).filter(Boolean);
     const recWords = recognized.split(/\s+/).filter(Boolean);
@@ -228,7 +225,7 @@ export default function RussianReadAloudDemo() {
     const blob = await fetch(recordedUrl).then((r) => r.blob());
     const formData = new FormData();
     formData.append("audio", blob, "recording.webm");
-    formData.append("text", sample.ru);
+    formData.append("text", russianText);
     try {
       const res = await fetch("/api/score", { method: "POST", body: formData });
       const data = await res.json();
@@ -239,13 +236,60 @@ export default function RussianReadAloudDemo() {
     }
   };
 
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const content = e.target?.result as string;
+      setRussianText(content);
+      setStatus(`已加载文件: ${file.name}`);
+    };
+    reader.readAsText(file);
+  };
+
   return (
     <div style={{ maxWidth: 800, margin: "40px auto", padding: 20, fontFamily: "sans-serif" }}>
-      <h1>{sample.title}</h1>
-      <div style={{ marginBottom: 20, lineHeight: 1.8 }}>
-        <p style={{ fontSize: 18, fontWeight: "bold" }}>俄语原文:</p>
-        <p style={{ fontSize: 16 }}>{sample.ru}</p>
-        <p style={{ fontSize: 14, color: "#666" }}>中文参考: {sample.zh}</p>
+      <h1>俄语朗读练习</h1>
+
+      <div style={{ marginBottom: 20 }}>
+        <div style={{ marginBottom: 10 }}>
+          <label style={{ fontSize: 16, fontWeight: "bold", display: "block", marginBottom: 5 }}>
+            俄语文本:
+          </label>
+          <textarea
+            value={russianText}
+            onChange={(e) => setRussianText(e.target.value)}
+            placeholder="在此粘贴或输入俄语文本..."
+            style={{
+              width: "100%",
+              minHeight: 120,
+              padding: 10,
+              fontSize: 16,
+              border: "2px solid #ddd",
+              borderRadius: 6,
+              fontFamily: "monospace",
+              resize: "vertical",
+            }}
+          />
+        </div>
+
+        <div style={{ marginBottom: 10 }}>
+          <label style={{ fontSize: 14, display: "block", marginBottom: 5 }}>
+            或上传文本文件 (.txt):
+          </label>
+          <input
+            type="file"
+            accept=".txt"
+            onChange={handleFileUpload}
+            style={{ fontSize: 14 }}
+          />
+        </div>
+
+        <div style={{ fontSize: 12, color: "#666" }}>
+          字符数: {russianText.length}
+        </div>
       </div>
 
       <div style={{ marginBottom: 20 }}>
