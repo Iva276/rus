@@ -250,13 +250,42 @@ export default function RussianReadAloudDemo() {
   };
 
   return (
-    <div style={{ maxWidth: 800, margin: "40px auto", padding: 20, fontFamily: "sans-serif" }}>
-      <h1>俄语朗读练习</h1>
+    <div style={{
+      maxWidth: 900,
+      margin: "0 auto",
+      padding: "40px 24px",
+      minHeight: "100vh",
+      background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+    }}>
+      <div style={{
+        background: "white",
+        borderRadius: 16,
+        padding: "40px",
+        boxShadow: "0 20px 60px rgba(0,0,0,0.3)",
+      }}>
+        <h1 style={{
+          fontSize: 32,
+          fontWeight: 700,
+          marginBottom: 8,
+          color: "#1a202c",
+          textAlign: "center"
+        }}>俄语朗读练习</h1>
+        <p style={{
+          textAlign: "center",
+          color: "#718096",
+          marginBottom: 32,
+          fontSize: 14
+        }}>粘贴或上传俄语文本，开始练习朗读</p>
 
-      <div style={{ marginBottom: 20 }}>
-        <div style={{ marginBottom: 10 }}>
-          <label style={{ fontSize: 16, fontWeight: "bold", display: "block", marginBottom: 5 }}>
-            俄语文本:
+        <div style={{ marginBottom: 24 }}>
+          <label style={{
+            fontSize: 14,
+            fontWeight: 600,
+            display: "block",
+            marginBottom: 8,
+            color: "#2d3748"
+          }}>
+            俄语文本
           </label>
           <textarea
             value={russianText}
@@ -264,113 +293,209 @@ export default function RussianReadAloudDemo() {
             placeholder="在此粘贴或输入俄语文本..."
             style={{
               width: "100%",
-              minHeight: 120,
-              padding: 10,
-              fontSize: 16,
-              border: "2px solid #ddd",
-              borderRadius: 6,
-              fontFamily: "monospace",
+              minHeight: 140,
+              padding: 16,
+              fontSize: 15,
+              border: "2px solid #e2e8f0",
+              borderRadius: 8,
+              fontFamily: "'Segoe UI', sans-serif",
               resize: "vertical",
+              outline: "none",
+              transition: "border-color 0.2s",
+              lineHeight: 1.6,
             }}
+            onFocus={(e) => e.target.style.borderColor = "#667eea"}
+            onBlur={(e) => e.target.style.borderColor = "#e2e8f0"}
           />
+          <div style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginTop: 8
+          }}>
+            <label style={{
+              display: "inline-flex",
+              alignItems: "center",
+              padding: "8px 16px",
+              background: "#f7fafc",
+              borderRadius: 6,
+              cursor: "pointer",
+              fontSize: 13,
+              color: "#4a5568",
+              border: "1px solid #e2e8f0",
+              transition: "all 0.2s"
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = "#edf2f7";
+              e.currentTarget.style.borderColor = "#cbd5e0";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = "#f7fafc";
+              e.currentTarget.style.borderColor = "#e2e8f0";
+            }}>
+              📁 上传文本文件
+              <input
+                type="file"
+                accept=".txt"
+                onChange={handleFileUpload}
+                style={{ display: "none" }}
+              />
+            </label>
+            <span style={{ fontSize: 12, color: "#a0aec0" }}>
+              {russianText.length} 字符
+            </span>
+          </div>
         </div>
 
-        <div style={{ marginBottom: 10 }}>
-          <label style={{ fontSize: 14, display: "block", marginBottom: 5 }}>
-            或上传文本文件 (.txt):
-          </label>
-          <input
-            type="file"
-            accept=".txt"
-            onChange={handleFileUpload}
-            style={{ fontSize: 14 }}
-          />
-        </div>
-
-        <div style={{ fontSize: 12, color: "#666" }}>
-          字符数: {russianText.length}
-        </div>
-      </div>
-
-      <div style={{ marginBottom: 20 }}>
-        <button onClick={handleSpeak} style={btnStyle}>
-          {isPaused ? "▶️ 继续" : isSpeaking ? "⏸️ 暂停" : "🔊 播放"}
-        </button>
-        {(isSpeaking || isPaused) && (
+        <div style={{
+          display: "flex",
+          gap: 12,
+          marginBottom: 24,
+          flexWrap: "wrap"
+        }}>
           <button
-            onClick={handleStop}
-            style={{ ...btnStyle, background: "#e74c3c", marginLeft: 10 }}
+            onClick={handleSpeak}
+            style={{
+              ...btnStyle,
+              flex: 1,
+              minWidth: 140,
+              background: isSpeaking ? "#f59e0b" : "#667eea",
+            }}
           >
-            ⏹️ 停止
+            {isPaused ? "▶ 继续" : isSpeaking ? "⏸ 暂停" : "🔊 播放朗读"}
           </button>
+          {(isSpeaking || isPaused) && (
+            <button
+              onClick={handleStop}
+              style={{
+                ...btnStyle,
+                background: "#ef4444",
+                minWidth: 100
+              }}
+            >
+              ⏹ 停止
+            </button>
+          )}
+        </div>
+
+        <div style={{ marginBottom: 24 }}>
+          {!isRecognizing ? (
+            <button
+              onClick={handleStartRecognition}
+              style={{
+                ...btnStyle,
+                width: "100%",
+                background: "#10b981",
+                fontSize: 16,
+                padding: "14px 24px",
+              }}
+            >
+              🎤 开始录音
+            </button>
+          ) : (
+            <button
+              onClick={handleStopRecognition}
+              style={{
+                ...btnStyle,
+                width: "100%",
+                background: "#ef4444",
+                fontSize: 16,
+                padding: "14px 24px",
+              }}
+            >
+              ⏹ 停止录音
+            </button>
+          )}
+        </div>
+
+        {status && (
+          <div style={{
+            padding: 12,
+            background: "#f0f9ff",
+            borderLeft: "3px solid #3b82f6",
+            borderRadius: 6,
+            marginBottom: 16,
+            fontSize: 13,
+            color: "#1e40af"
+          }}>
+            <strong>状态:</strong> {status}
+          </div>
         )}
-        <button
-          onClick={() => {
-            const voices = window.speechSynthesis.getVoices();
-            const info = voices.map(v => `${v.name} (${v.lang})`).join('\n');
-            alert(`共 ${voices.length} 个语音:\n\n${info || '无可用语音'}`);
-          }}
-          style={{ ...btnStyle, background: "#95a5a6", marginLeft: 10 }}
-        >
-          检查语音
-        </button>
-      </div>
 
-      <div style={{ marginBottom: 20 }}>
-        {!isRecognizing ? (
-          <button onClick={handleStartRecognition} style={btnStyle}>
-            开始跟读 + 录音
-          </button>
-        ) : (
-          <button onClick={handleStopRecognition} style={{ ...btnStyle, background: "#e74c3c" }}>
-            停止跟读
-          </button>
+        {recognizedText && (
+          <div style={{
+            marginBottom: 20,
+            padding: 20,
+            background: "#fefce8",
+            borderRadius: 8,
+            border: "1px solid #fde047"
+          }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: "#854d0e", marginBottom: 8 }}>实时识别</div>
+            <p style={{ margin: 0, fontSize: 15, lineHeight: 1.6, color: "#422006" }}>{recognizedText}</p>
+          </div>
+        )}
+
+        {score !== null && (
+          <div style={{
+            marginBottom: 20,
+            padding: 20,
+            background: "linear-gradient(135deg, #d4fc79 0%, #96e6a1 100%)",
+            borderRadius: 8,
+            textAlign: "center"
+          }}>
+            <div style={{ fontSize: 14, color: "#065f46", marginBottom: 4 }}>准确率评分</div>
+            <div style={{ fontSize: 48, fontWeight: 700, color: "#064e3b" }}>{score}</div>
+            <div style={{ fontSize: 14, color: "#065f46" }}>分</div>
+          </div>
+        )}
+
+        {recordedUrl && (
+          <div style={{
+            padding: 20,
+            background: "#f8fafc",
+            borderRadius: 8,
+            border: "1px solid #e2e8f0"
+          }}>
+            <div style={{ fontSize: 14, fontWeight: 600, color: "#1e293b", marginBottom: 12 }}>你的录音</div>
+            <audio src={recordedUrl} controls style={{ width: "100%", marginBottom: 16 }} />
+            <div style={{ display: "flex", gap: 12 }}>
+              <button
+                onClick={handleDownload}
+                style={{
+                  ...btnStyle,
+                  flex: 1,
+                  background: "#0ea5e9"
+                }}
+              >
+                📥 下载录音
+              </button>
+              <button
+                onClick={handleUpload}
+                style={{
+                  ...btnStyle,
+                  flex: 1,
+                  background: "#8b5cf6"
+                }}
+              >
+                ☁️ 上传
+              </button>
+            </div>
+          </div>
         )}
       </div>
-
-      {status && (
-        <p style={{ color: "#555", fontSize: 14 }}>
-          <strong>状态:</strong> {status}
-        </p>
-      )}
-
-      {recognizedText && (
-        <div style={{ marginBottom: 20, padding: 15, background: "#f0f0f0", borderRadius: 6 }}>
-          <strong>实时识别:</strong>
-          <p style={{ margin: "10px 0 0 0" }}>{recognizedText}</p>
-        </div>
-      )}
-
-      {score !== null && (
-        <div style={{ marginBottom: 20, padding: 15, background: "#d4edda", borderRadius: 6 }}>
-          <strong>本地评分:</strong> {score} 分
-        </div>
-      )}
-
-      {recordedUrl && (
-        <div style={{ marginBottom: 20 }}>
-          <p>
-            <strong>你的录音:</strong>
-          </p>
-          <audio src={recordedUrl} controls style={{ width: "100%", marginBottom: 10 }} />
-          <button onClick={handleDownload} style={{ ...btnStyle, marginRight: 10 }}>
-            下载录音
-          </button>
-          <button onClick={handleUpload} style={btnStyle}>
-            上传到服务器 (示例)
-          </button>
-        </div>
-      )}
     </div>
   );
 }
 
 const btnStyle: React.CSSProperties = {
-  padding: "10px 20px",
-  fontSize: 16,
+  padding: "12px 24px",
+  fontSize: 15,
+  fontWeight: 600,
   background: "#3498db",
   color: "#fff",
   border: "none",
-  borderRadius: 6,
+  borderRadius: 8,
   cursor: "pointer",
+  transition: "all 0.2s ease",
+  boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
 };
